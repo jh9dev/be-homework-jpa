@@ -1,9 +1,13 @@
 package com.springboot.order.service;
 
+import com.springboot.coffee.entity.Coffee;
+import com.springboot.coffee.service.CoffeeService;
 import com.springboot.exception.BusinessLogicException;
 import com.springboot.exception.ExceptionCode;
+import com.springboot.member.entity.Member;
 import com.springboot.member.service.MemberService;
 import com.springboot.order.entity.Order;
+import com.springboot.order.entity.OrderCoffee;
 import com.springboot.order.repository.OrderRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,19 +20,34 @@ import java.util.Optional;
 @Service
 public class OrderService {
     private final MemberService memberService;
+    private final CoffeeService coffeeService;
     private final OrderRepository orderRepository;
 
     public OrderService(MemberService memberService,
+                        CoffeeService coffeeService,
                         OrderRepository orderRepository) {
         this.memberService = memberService;
+        this.coffeeService = coffeeService;
         this.orderRepository = orderRepository;
     }
 
     public Order createOrder(Order order) {
         // 회원이 존재하는지 확인
-        memberService.findVerifiedMember(order.getMember().getMemberId());
+        Member member = memberService.findVerifiedMember(order.getMember().getMemberId());
+        order.setMember(member);
 
         // TODO 커피가 존재하는지 조회하는 로직이 포함되어야 합니다.
+        int coffeeCount = 0;
+        for (OrderCoffee orderCoffee : order.getOrderCoffees()) {
+            Coffee coffee = coffeeService.findCoffee(orderCoffee.getCoffee().getCoffeeId());
+
+            orderCoffee.setCoffee(coffee);
+            orderCoffee.setOrder(order);
+
+            coffeeCount += orderCoffee.getQuantity();
+        }
+
+        member.getStamp().increaseStampCount(coffeeCount);
 
         return orderRepository.save(order);
     }
