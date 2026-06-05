@@ -12,6 +12,7 @@ public class MemberResponseDto {
     private String name;
     private String phone;
     private Member.MemberStatus memberStatus;   // 추가된 부분
+    private Integer stampCount;
 
     // 추가된 부분
     public String getMemberStatus() {
